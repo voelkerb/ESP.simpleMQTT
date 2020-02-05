@@ -27,27 +27,25 @@ class MQTT {
   public:
     MQTT();
 
-    void init(char * theIP, char * theID, void (*cb)(char*, byte*, unsigned int));
-    void init();
+    void init(char * theIP, char * theID);
     bool connect();
+    bool disconnect();
     void update();
 
-    void publish(char * topic, char * msg);
-    void subscribe(char * topic);
+    void publish(const char * topic, const  char * msg);
+    void subscribe(const char * topic);
 
     bool connected;
     void (*onDisconnect)(void);
     void (*onConnect)(void);
+    void (*onMessage)(char*, byte*, unsigned int);
 
     char * ip;
     char * id;
 
   private:
 
-    void _init();
-
-    void (*_cb)(char*, byte*, unsigned int);
-
+    const char * STANDARD_ID = "-";
     long _mqttUpdate;
 
     WiFiClient _mqtt_client;

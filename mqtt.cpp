@@ -13,24 +13,21 @@
 
 
 MQTT::MQTT():_mqttClient(_mqtt_client) {
-  ip = NULL;
-  id = NULL;
+  ip = (char*)STANDARD_ID;
+  id = (char*)STANDARD_ID;
   onDisconnect = NULL;
   onConnect = NULL;
-  _cb = NULL;
+  onMessage = NULL;
   connected = false;
 }
 
-void MQTT::init(char * theIP, char * theID, void (*cb)(char*, byte*, unsigned int)) {
+void MQTT::init(char * theIP, char * theID) {
+  if (connected) {
+    disconnect();
+  }
   ip = theIP;
   id = theID;
-  _cb = cb;
   _mqttUpdate = millis();
-  init();
-}
-
-void MQTT::init() {
-  connect();
 }
 
 void MQTT::update() {
@@ -45,23 +42,23 @@ void MQTT::update() {
     if ((long)(millis() - _mqttUpdate) >= 0) _mqttUpdate = millis() + MQTT_UPDATE_INTERVAL;
     
     if (connected and !_mqttClient.connected()) {
-      if (onDisconnect != NULL) onDisconnect();
+      disconnect();
       connected = false;
     }
     if (!connected) {
-      init();
+      connect();
     }
   }
 }
 
 // Wrapper since we made another class out of it
-void MQTT::subscribe(char * topic) {
+void MQTT::subscribe(const char * topic) {
   _mqttClient.subscribe(topic);
   _mqttClient.loop();
 }
 
 // Wrapper since we made another class out of it
-void MQTT::publish(char * topic, char * msg) {
+void MQTT::publish(const char * topic, const char * msg) {
   _mqttClient.publish(topic, msg);
   _mqttClient.loop();
 }
@@ -74,7 +71,7 @@ bool MQTT::connect() {
 
   // Set server
   _mqttClient.setServer(ip, DEFAULT_MQTT_PORT);
-  _mqttClient.setCallback(_cb);
+  _mqttClient.setCallback(onMessage);
 
   // Look if connection is successfull and return if not
   if (!_mqttClient.connect(id)) {
@@ -83,7 +80,21 @@ bool MQTT::connect() {
 
   // Subscribe to all the topics
   connected = true;
+
+  if (onConnect != NULL) onConnect();
+
   return connected;
 }
+
+bool MQTT::disconnect() {
+  _mqttClient.disconnect();
+
+  connected = false;
+
+  if (onDisconnect != NULL) onDisconnect();
+
+  return true;
+}
+
 
 
