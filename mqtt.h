@@ -45,9 +45,14 @@ class MQTT {
 
   private:
 
+    // Freertos callbacks need to be static members
+    static void _connectMqtt(void * pvParameters);
+    bool _connect();
+
     const char * STANDARD_ID = "-";
     long _mqttUpdate;
 
+    TaskHandle_t _connectHandle;
     WiFiClient _mqtt_client;
     PubSubClient _mqttClient;
 };
