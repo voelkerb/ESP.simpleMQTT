@@ -46,8 +46,6 @@ void MQTT::update() {
     if (connected and !_mqttClient.connected()) {
       disconnect();
       connected = false;
-    }
-    if (!connected) {
       if (_connectHandle == NULL) {
         // let it check on second core (not in loop)
         MQTT *obj = this;
@@ -77,6 +75,7 @@ void MQTT::publish(const char * topic, const char * msg) {
 
 bool MQTT::connect() {
   // Check if connection request has already been handled 
+  // TODO: will not connect if tried once
   if (_connectHandle != NULL) return false;
   // Check if IDs and stuff is set
   if (ip == NULL or id == NULL) return false;
@@ -115,6 +114,7 @@ void MQTT::_connectMqtt(void * pvParameters) {
     vTaskDelay(10000);
     mqttConnected = ((MQTT*)pvParameters)->_connect();
   }
+  ((MQTT*)pvParameters)->_connectHandle = NULL;
   // Delete this task
   vTaskDelete(NULL);
 }
