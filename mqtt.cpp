@@ -111,7 +111,7 @@ bool MQTT::connect() {
 void MQTT::_connectMqtt(void * pvParameters) {
   bool mqttConnected = ((MQTT*)pvParameters)->_connect();;
   while(!mqttConnected) {
-    vTaskDelay(10000);
+    vTaskDelay(MQTT_UPDATE_INTERVAL);
     mqttConnected = ((MQTT*)pvParameters)->_connect();
   }
   ((MQTT*)pvParameters)->_connectHandle = NULL;
