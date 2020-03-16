@@ -39,9 +39,9 @@ void MQTT::update() {
 
   // MQTT stuff, check connection status, on disconnect, try reconnect
   if ((long)(millis() - _mqttUpdate) >= 0) {
-    _mqttUpdate += MQTT_UPDATE_INTERVAL;
+    _mqttUpdate += _MQTT_UPDATE_INTERVAL;
     // On long time no update, avoid multiupdate
-    if ((long)(millis() - _mqttUpdate) >= 0) _mqttUpdate = millis() + MQTT_UPDATE_INTERVAL;
+    if ((long)(millis() - _mqttUpdate) >= 0) _mqttUpdate = millis() + _MQTT_UPDATE_INTERVAL;
     
     if (connected and !_mqttClient.connected()) {
       disconnect();
@@ -111,7 +111,7 @@ bool MQTT::connect() {
 void MQTT::_connectMqtt(void * pvParameters) {
   bool mqttConnected = ((MQTT*)pvParameters)->_connect();;
   while(!mqttConnected) {
-    vTaskDelay(MQTT_UPDATE_INTERVAL);
+    vTaskDelay(_MQTT_UPDATE_INTERVAL);
     mqttConnected = ((MQTT*)pvParameters)->_connect();
   }
   ((MQTT*)pvParameters)->_connectHandle = NULL;

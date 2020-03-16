@@ -21,7 +21,7 @@
 #include <PubSubClient.h>
 
 #define DEFAULT_MQTT_PORT 1883
-#define MQTT_UPDATE_INTERVAL 30000
+#define _MQTT_UPDATE_INTERVAL 30000
 
 class MQTT {
   public:
