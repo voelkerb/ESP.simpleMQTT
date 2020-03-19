@@ -30,12 +30,12 @@ class MQTT {
     void init(char * theIP, char * theID);
     bool connect();
     bool disconnect();
+    bool connected();
     void update();
 
     void publish(const char * topic, const  char * msg);
     void subscribe(const char * topic);
 
-    bool connected;
     void (*onDisconnect)(void);
     void (*onConnect)(void);
     void (*onMessage)(char*, byte*, unsigned int);
@@ -44,6 +44,7 @@ class MQTT {
     char * id;
 
   private:
+    bool _connected;
 
     // Freertos callbacks need to be static members
     static void _connectMqtt(void * pvParameters);

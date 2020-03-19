@@ -18,12 +18,12 @@ MQTT::MQTT():_mqttClient(_mqtt_client) {
   onDisconnect = NULL;
   onConnect = NULL;
   onMessage = NULL;
-  connected = false;
+  _connected = false;
   _connectHandle = NULL;
 }
 
 void MQTT::init(char * theIP, char * theID) {
-  if (connected) {
+  if (_connected) {
     disconnect();
   }
   ip = theIP;
@@ -32,10 +32,8 @@ void MQTT::init(char * theIP, char * theID) {
 }
 
 void MQTT::update() {
-  if (not connected) return;
+  if (not _connected) return;
 
-  // MQTT loop
- _mqttClient.loop();
 
   // MQTT stuff, check connection status, on disconnect, try reconnect
   if ((long)(millis() - _mqttUpdate) >= 0) {
@@ -43,9 +41,9 @@ void MQTT::update() {
     // On long time no update, avoid multiupdate
     if ((long)(millis() - _mqttUpdate) >= 0) _mqttUpdate = millis() + _MQTT_UPDATE_INTERVAL;
     
-    if (connected and !_mqttClient.connected()) {
+    if (_connected and !_mqttClient.connected()) {
       disconnect();
-      connected = false;
+      _connected = false;
       if (_connectHandle == NULL) {
         // let it check on second core (not in loop)
         MQTT *obj = this;
@@ -56,10 +54,32 @@ void MQTT::update() {
                     1,                /* Priority of the task. */
                     &_connectHandle);            /* Task handle. */
       }
+      return;
     }
   }
+
+  // MQTT loop
+ _mqttClient.loop();
 }
 
+bool MQTT::connected() {
+  if (_connected and !_mqttClient.connected()) {
+    disconnect();
+    _connected = false;
+    if (_connectHandle == NULL) {
+      // let it check on second core (not in loop)
+      MQTT *obj = this;
+      xTaskCreate(_connectMqtt,          /* Task function. */
+                  "_connectMqtt",        /* String with name of task. */
+                  10000,            /* Stack size in bytes. */
+                  (void*) obj,       /* Task input parameter */
+                  1,                /* Priority of the task. */
+                  &_connectHandle);            /* Task handle. */
+    }
+  }
+  return _mqttClient.connected();
+
+}
 
 // Wrapper since we made another class out of it
 void MQTT::subscribe(const char * topic) {
@@ -79,9 +99,6 @@ bool MQTT::connect() {
   if (_connectHandle != NULL) return false;
   // Check if IDs and stuff is set
   if (ip == NULL or id == NULL) return false;
-  
-  // if we changed server and were connected
-  if (_mqttClient.connected()) _mqttClient.disconnect();
 
   // Set server and callbacks
   _mqttClient.setServer(ip, DEFAULT_MQTT_PORT);
@@ -91,7 +108,7 @@ bool MQTT::connect() {
   _connect();
 
   // If still not connected, use free rtos task to establish nonblocking connect
-  if (not connected) {
+  if (not _connected) {
     if (_connectHandle == NULL) {
       // let it check on second core (not in loop)
       MQTT *obj = this;
@@ -103,16 +120,16 @@ bool MQTT::connect() {
                   &_connectHandle);            /* Task handle. */
     }
   }
-  return connected;
+  return _connected;
 }
   
 // _________________________________________________________________________
 // Decorator function since we cannot use non static member function in freertos' createTask 
 void MQTT::_connectMqtt(void * pvParameters) {
-  bool mqttConnected = ((MQTT*)pvParameters)->_connect();;
-  while(!mqttConnected) {
+  bool mqtt_connected = ((MQTT*)pvParameters)->_connect();
+  while(!mqtt_connected) {
     vTaskDelay(_MQTT_UPDATE_INTERVAL);
-    mqttConnected = ((MQTT*)pvParameters)->_connect();
+    mqtt_connected = ((MQTT*)pvParameters)->_connect();
   }
   ((MQTT*)pvParameters)->_connectHandle = NULL;
   // Delete this task
@@ -120,9 +137,11 @@ void MQTT::_connectMqtt(void * pvParameters) {
 }
 
 bool MQTT::_connect() {
+  // If already connected
+  if (_mqttClient.connected()) return true;
   if (_mqttClient.connect(id)) {
     // Set connected flag of member
-    connected = true;
+    _connected = true;
     // Call callback
     if (onConnect != NULL) onConnect();
     return true;
@@ -134,7 +153,7 @@ bool MQTT::_connect() {
 bool MQTT::disconnect() {
   _mqttClient.disconnect();
 
-  connected = false;
+  _connected = false;
 
   if (onDisconnect != NULL) onDisconnect();
 
