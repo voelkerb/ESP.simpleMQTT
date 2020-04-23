@@ -33,7 +33,7 @@ void MQTT::init(char * theIP, char * theID) {
 
 void MQTT::update() {
   if (not _connected) return;
-
+  // TODO: Why so complex, try to make it easier
 
   // MQTT stuff, check connection status, on disconnect, try reconnect
   if ((long)(millis() - _mqttUpdate) >= 0) {
@@ -67,7 +67,6 @@ bool MQTT::connected() {
     disconnect();
     _connected = false;
     if (_connectHandle == NULL) {
-      // let it check on second core (not in loop)
       MQTT *obj = this;
       xTaskCreate(_connectMqtt,          /* Task function. */
                   "_connectMqtt",        /* String with name of task. */
@@ -84,7 +83,6 @@ bool MQTT::connected() {
 // Wrapper since we made another class out of it
 void MQTT::subscribe(const char * topic) {
   _mqttClient.subscribe(topic);
-  delay(10);
   _mqttClient.loop();
 }
 
@@ -98,7 +96,7 @@ bool MQTT::connect() {
   // TODO: will not connect if tried once
   if (_connectHandle != NULL) return false;
   // Check if IDs and stuff is set
-  if (ip == NULL or id == NULL) return false;
+  if (ip == NULL or id == NULL or strcmp(ip, "-") == 0) return false;
 
   // Set server and callbacks
   _mqttClient.setServer(ip, DEFAULT_MQTT_PORT);
@@ -151,11 +149,12 @@ bool MQTT::_connect() {
 
 
 bool MQTT::disconnect() {
+  bool wasConnected = _mqttClient.connected();
   _mqttClient.disconnect();
 
   _connected = false;
 
-  if (onDisconnect != NULL) onDisconnect();
+  if (wasConnected and onDisconnect != NULL) onDisconnect();
 
   return true;
 }
