@@ -19,10 +19,10 @@
 #define RELAY_PIN 13
 
 // Wifi credentials
-const char* SSID = "FallObst";
-const char* PWD =  "logitech";
+const char* SSID = "YourNetworkName";
+const char* PWD =  "YourPassword";
 
-const char * MQTT_SERVER = "192.168.0.13";
+const char * MQTT_SERVER = "broker.mqtt-dashboard.com";
 const char * DEVICE_NAME = "myESPRelay";
 
 MQTT mqtt;
