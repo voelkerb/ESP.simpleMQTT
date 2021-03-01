@@ -120,6 +120,7 @@ void MQTT::_startConnectMqtt() {
                   1,                /* Priority of the task. */
                   &_connectHandle);            /* Task handle. */
   }
+#endif
 // #elif defined(ESP8266)
 //   // Use lambda function here to avoid static member function problem
 //   _checker.attach(_MQTT_UPDATE_INTERVAL/1000, +[](MQTT* instance) { instance->_connect(); }, this);
@@ -143,6 +144,7 @@ void MQTT::_connectMqtt(void * pvParameters) {
   // Delete this task
   vTaskDelete(NULL);
 }
+#endif
 
 bool MQTT::_connect() {
   // If already connected
