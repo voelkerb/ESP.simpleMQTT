@@ -1,5 +1,5 @@
 /***************************************************
- Example file for using the bistableRelay library.
+ Example file for using the SimpleMQTT library.
  
  License: Creative Common V1. 
 
@@ -35,9 +35,6 @@ char publishTopic[MAX_TOPIC_LEN] = {'\0'};
 char message[MAX_STR_LEN] = {'\0'};
 
 int relayState = -1;
-
-WiFiClient espClient;
-PubSubClient testClient(espClient);
 
 void setup() {
   Serial.begin(115200);
