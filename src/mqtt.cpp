@@ -43,10 +43,12 @@ void MQTT::update() {
 #if !defined(ESP32) 
 // #if !defined(ESP8266) && !defined(ESP32) 
     // Update stuff over mqtt
-    if ((long)(millis() - lastCheck) >= 0) {
-      lastCheck += _MQTT_UPDATE_INTERVAL;
-      // On long time no update, avoid multiupdate
-      if ((long)(millis() - lastCheck) >= 0) lastCheck = millis() + _MQTT_UPDATE_INTERVAL;
+    if (millis() - lastCheck > _MQTT_UPDATE_INTERVAL) {
+      lastCheck = millis();
+    // if ((long)(millis() - lastCheck) >= 0) {
+    //   lastCheck += _MQTT_UPDATE_INTERVAL;
+    //   // On long time no update, avoid multiupdate
+    //   if ((long)(millis() - lastCheck) >= 0) lastCheck = millis() + _MQTT_UPDATE_INTERVAL;
       _connect();
     }
 #endif
