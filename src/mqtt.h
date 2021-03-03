@@ -67,11 +67,10 @@ class MQTT {
     Ticker _checker;
 #else 
 #endif
-    long lastCheck;
     void _startConnectMqtt();
 
     const char * STANDARD_ID = "-";
-    long _mqttUpdate;
+    uint32_t _mqttUpdate;
 
     WiFiClient _mqtt_client;
     PubSubClient _mqttClient;

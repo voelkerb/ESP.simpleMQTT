@@ -19,7 +19,6 @@ MQTT::MQTT():_mqttClient(_mqtt_client) {
   onConnect = NULL;
   onMessage = NULL;
   _connected = false;
-  lastCheck = millis();
 #if defined(ESP32)
   _connectHandle = NULL;
 #endif
@@ -43,12 +42,13 @@ void MQTT::update() {
 #if !defined(ESP32) 
 // #if !defined(ESP8266) && !defined(ESP32) 
     // Update stuff over mqtt
-    if (millis() - lastCheck > _MQTT_UPDATE_INTERVAL) {
-      lastCheck = millis();
-    // if ((long)(millis() - lastCheck) >= 0) {
-    //   lastCheck += _MQTT_UPDATE_INTERVAL;
+
+    if (millis() - _mqttUpdate > _MQTT_UPDATE_INTERVAL) {
+      _mqttUpdate = millis();
+    // if ((long)(millis() - _mqttUpdate) >= 0) {
+    //   _mqttUpdate += _MQTT_UPDATE_INTERVAL;
     //   // On long time no update, avoid multiupdate
-    //   if ((long)(millis() - lastCheck) >= 0) lastCheck = millis() + _MQTT_UPDATE_INTERVAL;
+    //   if ((long)(millis() - _mqttUpdate) >= 0) _mqttUpdate = millis() + _MQTT_UPDATE_INTERVAL;
       _connect();
     }
 #endif
