@@ -168,7 +168,7 @@ bool MQTT::_connect() {
 
 bool MQTT::disconnect() {
   bool wasConnected = _mqttClient.connected();
-  disconnect(wasConnected);
+  return disconnect(wasConnected);
 }
 
 bool MQTT::disconnect(bool notify) {
