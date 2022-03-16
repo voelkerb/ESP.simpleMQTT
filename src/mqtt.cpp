@@ -15,9 +15,13 @@
 MQTT::MQTT():_mqttClient(_mqtt_client) {
   ip = (char*)STANDARD_ID;
   id = (char*)STANDARD_ID;
+  port = DEFAULT_MQTT_PORT;
+  user = (char*)"\0";
+  pwd = (char*)"\0";
   onDisconnect = NULL;
   onConnect = NULL;
   onMessage = NULL;
+  logFunc = NULL;
   _connected = false;
 #if defined(ESP32)
   _connectHandle = NULL;
@@ -25,15 +29,18 @@ MQTT::MQTT():_mqttClient(_mqtt_client) {
   _autoReconnect = true;
 }
 
-void MQTT::init(char * theIP, char * theID) {
-  init(theIP, theID, true);
+void MQTT::init(char * theIP, uint16_t thePort, char * theID, char * theUser, char * thePwd) {
+  init(theIP, thePort, theID, theUser, thePwd, true);
 }
 
-void MQTT::init(char * theIP, char * theID, bool reconnect) {
+void MQTT::init(char * theIP, uint16_t thePort, char * theID, char * theUser, char * thePwd, bool reconnect) {
   if (_connected) disconnect(false);
   _autoReconnect = reconnect;
   ip = theIP;
   id = theID;
+  port = thePort;
+  user = theUser;
+  pwd = thePwd;
   _mqttUpdate = millis();
 }
 
@@ -97,7 +104,7 @@ bool MQTT::connect() {
   if (ip == NULL or id == NULL or strcmp(ip, "-") == 0) return false;
 
   // Set server and callbacks
-  _mqttClient.setServer(ip, DEFAULT_MQTT_PORT);
+  _mqttClient.setServer(ip, port);
   _mqttClient.setCallback(onMessage);
 
   // Try to connect once
@@ -150,9 +157,23 @@ void MQTT::_connectMqtt(void * pvParameters) {
 
 bool MQTT::_connect() {
   // If already connected
-  if (_mqttClient.connected()) return true;
+  if (_mqttClient.connected()) {
+    if (logFunc) {
+      logFunc("MQTT was already connected");
+    }
+    return true;
+  }
+  if (logFunc) {
+    logFunc("Connecting MQTT, id: %s, user: %s, pwd: %s", id, user, pwd);
+  }
   //  Try to immidiately connect once
-  if (_mqttClient.connect(id)) {
+  bool conn = false;
+  if (strlen(user) > 0 && strlen(pwd) > 0) {
+    conn = _mqttClient.connect(id, user, pwd);
+  } else {
+    conn = _mqttClient.connect(id);
+  }
+  if (conn) {
     // Set connected flag of member
     _connected = true;
 #if defined(ESP8266)
@@ -161,6 +182,12 @@ bool MQTT::_connect() {
     // Call callback
     if (onConnect != NULL) onConnect();
     return true;
+    if (logFunc) {
+      logFunc("connected");
+    }
+  }
+  if (logFunc) {
+    logFunc("Cannot connect Mqtt");
   }
   return false;
 }
@@ -172,7 +199,15 @@ bool MQTT::disconnect() {
 }
 
 bool MQTT::disconnect(bool notify) {
-  if (_mqttClient.connected()) _mqttClient.disconnect();
+  if (_mqttClient.connected()) {
+    _mqttClient.disconnect();
+    if (logFunc) {
+      logFunc("Disconnected MQTT");
+    }
+  }
+  if (logFunc) {
+    logFunc("MQTT was already disconnected");
+  }
   _connected = false;
   if (notify and onDisconnect != NULL) onDisconnect();
   return true;

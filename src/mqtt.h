@@ -28,14 +28,14 @@
 
 #define DEFAULT_MQTT_PORT 1883
 // MQTT is important, do not wait too long
-#define _MQTT_UPDATE_INTERVAL 1000
+#define _MQTT_UPDATE_INTERVAL 10000
 
 class MQTT {
   public:
     MQTT();
 
-    void init(char * theIP, char * theID);
-    void init(char * theIP, char * theID, bool reconnect);
+    void init(char * theIP, uint16_t thePort, char * theID, char * theUser, char * thePwd);
+    void init(char * theIP, uint16_t thePort, char * theID, char * theUser, char * thePwd, bool reconnect);
     bool connect();
     bool disconnect();
     bool disconnect(bool notify);
@@ -51,12 +51,18 @@ class MQTT {
     void (*onMessage)(char*, byte*, unsigned int);
 
     char * ip;
+    uint16_t port;
     char * id;
+    void (*logFunc)(const char * msg, ...);
 
     bool _connect();
   private:
+
+    char * user;
+    char * pwd;
     bool _connected;
     bool _autoReconnect;
+
 
 #if defined(ESP32)
     // Freertos callbacks need to be static members
